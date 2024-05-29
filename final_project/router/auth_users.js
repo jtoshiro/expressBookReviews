@@ -53,24 +53,41 @@ regd_users.post("/login", (req,res) => {
 
 
 // Add a book review
+//used Sundararajan (staff) code
 regd_users.put("/auth/review/:isbn", (req, res) => {
-        const isbn = req.params.isbn;
-        let review = books[isbn]
-        if (review) { //Check is review exists
-            let reviews = req.body.reviews;
-                
-            //if reviews the reviews has been changed, update the reviews
-            if(reviews) {
-                books["reviews"] = reviews
-            }
+    const isbn = req.params.isbn;
+    let filtered_book = books[isbn]
+    if (filtered_book) {
+        let reviews = req.query.reviews;
+        let reviewer = req.session.authorization['username'];
+        //if the review has changed
+        if(reviews) {
+            filtered_book["reviews"][reviewer]= reviews;
+            
+        }
+        books[isbn] = filtered_book;
+        res.send(`Review for book with the isbn  ${isbn} updated.`);
+    }
+    else{
+        res.send("Unable to find ISBN!");
+    }
+    });
 
-            books[isbn]=review;
-            res.send(`Book review with the ISBN  ${isbnl} updated.`);
-        }
-        else{
-            res.send("Unable to find book!");
-        }
-      });
+// Delete a book review
+//used Pallavi's code
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    const isbn = req.params.isbn;
+    let reviewer = req.session.authorization['username'];
+    let filtered_review = books[isbn]["reviews"];
+    
+    if (filtered_review[reviewer]) {
+        delete filtered_review[reviewer];
+        res.send(`Review for book with the isbn  ${isbn} by user ${reviewer} deleted.`);
+    }
+    else{
+        res.send("Cannot delete as the review has been posted by different user");
+    }
+    });
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
